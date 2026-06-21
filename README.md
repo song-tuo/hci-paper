@@ -22,7 +22,7 @@ data auditing, and LaTeX-oriented integrity checks.
 Clone the repository, then install for Codex or Claude Code:
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/song-tuo/hci-paper.git
 cd hci-paper
 bash install.sh codex
 # or: bash install.sh claude
