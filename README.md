@@ -78,6 +78,13 @@ history, credentials, email addresses, or institution data. Optional Codex roles
 send only the files explicitly selected by the caller. Review `PRIVACY.md` before
 using them with sensitive research data.
 
+## Contributors and provenance
+
+This skill was directed and curated by the repository owner, with implementation
+and review support from both Claude Code and GPT/Codex-assisted workflows. The
+public GitHub contributors graph reflects commit authorship only; see
+`CONTRIBUTORS.md` for the intended project-level attribution.
+
 ## Current limitations
 
 - Lifecycle phases are intentionally explicit; projects that do not use a phase
