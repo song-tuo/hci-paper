@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["claims", "summary"],
+  "properties": {
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "evidence_file", "verdict", "note"],
+        "properties": {
+          "claim": {"type": "string"},
+          "evidence_file": {"type": "string"},
+          "verdict": {"type": "string", "enum": ["supported", "partial", "unsupported", "no_evidence"]},
+          "note": {"type": "string"}
+        }
+      }
+    },
+    "summary": {"type": "string"}
+  }
+}

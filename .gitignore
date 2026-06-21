@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.log
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.out
+*.pdf
+.env
+HCI_STATE.json
+HANDOFF.md
+OUTPUT_MANIFEST.md
+DECISION_LEDGER.md
+CLAIM_EVIDENCE_LEDGER.md

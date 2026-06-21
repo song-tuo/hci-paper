@@ -1,0 +1,20 @@
+% hci-spine LaTeX skeleton — FORM: dataset_corpus (dataset / corpus / benchmark)
+\documentclass[sigconf,review,anonymous]{acmart}
+\settopmatter{printacmref=false}\usepackage{booktabs}
+\begin{document}
+\title{TITLE — name the dataset and what it enables}
+\begin{abstract}\end{abstract}
+\maketitle
+\section{Introduction}        % the data gap + contribution list
+\section{Related Data}
+\section{Collection}          % provenance, sampling, consent/license (disclose honestly)
+\section{Composition}
+\begin{table}[t]\centering\caption{Datasheet / composition stats.}
+\begin{tabular}{ll}\toprule field & value\\\bottomrule\end{tabular}\end{table}
+\section{Validation / Baselines}
+\section{Use Cases}
+% Honesty: collection method disclosed; license/consent verified; biases reported; no leakage.
+\section{Ethics and Limitations}
+\section{Conclusion}
+\bibliographystyle{ACM-Reference-Format}\bibliography{refs}
+\end{document}

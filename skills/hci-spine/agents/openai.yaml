@@ -1,0 +1,4 @@
+interface:
+  display_name: "HCI Spine"
+  short_description: "Develop HCI projects from idea to submission"
+  default_prompt: "Use $hci-spine to develop this HCI project with gated evidence, review, and submission checks."

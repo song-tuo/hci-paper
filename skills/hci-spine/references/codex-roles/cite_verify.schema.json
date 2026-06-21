@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["citations", "summary"],
+  "properties": {
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "exists", "claim_supported", "note"],
+        "properties": {
+          "key": {"type": "string"},
+          "exists": {"type": "string", "enum": ["yes", "no", "unsure"]},
+          "claim_supported": {"type": "string", "enum": ["yes", "partial", "no", "unsure"]},
+          "note": {"type": "string"}
+        }
+      }
+    },
+    "summary": {"type": "string"}
+  }
+}
