@@ -24,7 +24,6 @@ hci_resolve_codex() {
 hci_run_codex() {
   local prompt="$1" cd_dir="$2" out="$3" model="$4" reasoning="$5" schema="$6" dry="$7"
   [ -f "$prompt" ] || { echo "ERROR: prompt file missing: $prompt" >&2; return 2; }
-  case "$out" in /*) ;; *) out="$cd_dir/$out";; esac
 
   local codex; codex="$(hci_resolve_codex)" || {
     echo "ERROR: no working Codex binary (PATH shim broken AND Codex.app binary absent)." >&2

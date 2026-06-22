@@ -66,6 +66,12 @@ def validate(role: str, obj) -> list:
         for field, allowed in spec["enums"].items():
             if field in item and item[field] not in allowed:
                 errs.append(f"[{idx}] {field}={item[field]!r} not in {sorted(allowed)}")
+    # anti-vacuous: a verification that determined nothing is NOT a pass.
+    if role == "cite_verify" and arr and all(it.get("exists") == "unsure" for it in arr if isinstance(it, dict)):
+        errs.append("every citation is 'unsure' — no real existence verification was performed "
+                    "(run verify_citations.py against Crossref for the existence half)")
+    if role == "data_audit" and arr and all(it.get("verdict") == "no_evidence" for it in arr if isinstance(it, dict)):
+        errs.append("every claim is 'no_evidence' — audit produced no determination")
     return errs
 
 

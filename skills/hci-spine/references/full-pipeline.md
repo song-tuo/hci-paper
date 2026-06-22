@@ -1,101 +1,107 @@
-# HCI-Spine Full Pipeline
+# Full Pipeline — HCI idea → submission (master map)
 
-Use this map to resume a project. Read `HCI_STATE.json` and `HANDOFF.md` first;
-this file defines the stable workflow, while project files hold live state.
+The complete flow built across this work. Two halves:
+**Produce & review** (Claude side, `hci-spine` orchestrator) → **Polish & humanize**
+(Codex side, two-stage polish). Every gate is named; every step points at the exact
+skill/script that runs it. Skills not authored here are existing dependencies.
 
-## Lifecycle
-
-```text
-forge → lock → prototype_gate → ethics → study_design → pilot
-      → instrumentation → data_freeze → analysis → claim_lock → paper
+```
+STAGE 0  Idea            STAGE 1  hci-spine (produce + review)        STAGE 2  Polish (Codex)      STAGE 3
+idea-discovery   ─►   Phase0 router → research → gates → review   ─►   formal → human+signature  ─►  submit
+research-refine                                                        paper-polish-workflow         final
+                                                                       paper-polish-human            checks
 ```
 
-- Initialize or inspect state with `scripts/hci_state.py`.
-- Keep `PROJECT_ANCHOR.md`, `DECISION_LEDGER.md`, and
-  `CLAIM_EVIDENCE_LEDGER.md` current.
-- Regenerate `OUTPUT_MANIFEST.md` and `HANDOFF.md` before handing the project to
-  another agent or session.
-- If a lifecycle phase does not apply, record a justified exemption instead of
-  silently skipping it.
+---
 
-## Stage 0 — Forge and lock
+## STAGE 0 — Idea (optional, when the idea is vague)
+- `idea-discovery` / `research-refine` — turn a fuzzy direction into a problem-anchored idea.
+- Exit when you have a candidate contribution and a rough motivation.
 
-1. For a vague idea, stay in `forge`; use `idea-discovery`, `research-refine`,
-   or an equivalent adversarial dialogue.
-2. Run an idea-kill review before lock.
-3. Lock the motivation and record deprecated alternatives.
-4. Resolve four separate axes before leaving `lock`:
-   `primary_form`, optional `secondary_form`, `research_area`, `tradition`, and
-   `venue`.
-5. Load `references/contribution-form-playbooks.md`.
+## STAGE 1 — hci-spine orchestrator (produce + review)
+Entry: say "做 HCI 论文 / hci-spine", or run the intake wizard.
 
-## Stage 1 — Build evidence and the paper
+1. **Phase 0 — contribution-FORM router (FIRST).** Resolve the four axes — `primary_form`
+   (+ optional `secondary_form`) / `research_area` / `tradition` / `venue` — keeping
+   form separate from area (`aihci` is an area) and tradition. Forms: `empirical`,
+   `artifact`, `method`, `conceptual_theoretical`, `dataset_corpus`,
+   `critical_artistic`, `replication`. Load the form playbook
+   (`references/contribution-form-playbooks.md`). Writes `contribution_form.md`.
+   Project state is tracked by `scripts/hci_state.py` (lifecycle forge→…→paper).
+2. **Config — intake wizard.**
+   `bash scripts/launch_hci_spine_ui.sh <out>` (TUI) or
+   `python3 scripts/intake_wizard.py --in-place --output-dir <out>`. Writes `hci_spine_config.json`.
+3. **Research.** `deep-research` (local-first) → `research_dossier.md`,
+   `sota_gap_map.md`, `motivation_options_after_research.md`.
+4. **Citation coverage (NOT a quota).** `deep-research` / `citation-audit` →
+   `citation_support_bank.md` keyed by CLAIM — every claim needing support has the
+   citation(s) that support it, layered canonical / recent / opposing; each verified
+   for existence AND support. Completeness = claim coverage, never a candidate count
+   or an N-year freshness quota.
 
-1. Create `source_map.md`; index local references before web supplementation.
-2. Produce `research_dossier.md`, `exemplar_learning_dossier.md`,
-   `style_profile.md`, `sota_gap_map.md`, and
-   `motivation_options_after_research.md`.
-3. Build `citation_support_bank.md` by claim coverage. Layer canonical, recent,
-   and opposing evidence. Do not use a citation-count or recency quota.
-4. Pass the project gates:
-   - **Gate A:** motivation, scope, ethics plan, and idea red-team.
-   - **Gate B:** prototype/media fit, study-design red-team, ethics, pilot,
-     instrumentation, data freeze, analysis, and claim-to-evidence audit.
-   - **Gate C:** complete manuscript lint, citation audit, claim audit, and
-     independent citation triage.
-   - **Gate D:** multi-perspective review, adversarial review, and independent
-     cross-model review.
-   - **Gate E:** final integrity and venue-format audit.
-5. Create `section_blueprints.md` and `hci_rationale_matrix.md` before drafting.
-6. Draft from `templates/<primary_form>.tex`; merge secondary-form checks when
-   applicable.
-7. Compile source and PDF with the available LaTeX workflow.
+Integrity is FOUR ordered checkpoints (the lint needs a manuscript, so it runs AFTER
+the draft). Authoritative list is SKILL.md "Non-Negotiable Route"; summary:
 
-## Codex roles
+5. **GATE A — pre-study + motivation (HARD; no manuscript).** `confirmed_motivation.md`
+   + contribution statement in the FORM's vocabulary; scope + ethics resolved.
+   **Red-team #1 (idea kill)** via `kill-argument`. (state: `lock`.)
+6. **GATE B — pre-draft evidence readiness (HARD; before Findings).** Data frozen;
+   every claim has traceable evidence; form data audit (`experiment-audit` / Codex
+   `data_audit`). **Red-team #2 (media/AI necessity)**, **#3 (study-design attack)**.
+7. **Plan.** `section_blueprints.md` + **HCI Rationale Matrix** (`hci_rationale_matrix.md`).
+8. **Draft.** Use the form skeleton `templates/<form>.tex` (one per form:
+   artifact/empirical/method/conceptual_theoretical/dataset_corpus/critical_artistic/replication).
+   Optional `dual_write` via `codex_role.sh --role dual_write`.
+9. **GATE C — pre-review completeness (HARD; manuscript exists).** `check_universal.py
+   PAPER --min-words … --max-words … [--tex-root DIR] [--anonymous] [--log build.log]`
+   + `citation-audit` / `paper-claim-audit` + Codex `cite_verify`.
+10. **GATE D — peer review.** `academic-paper-reviewer` (5 personas, form-configured) +
+    `kill-argument` + Codex `review` (`codex_role.sh --role review`, or free-form
+    `codex_review.sh --prompt`; MCP-independent; anti-anchoring; merge-don't-average).
+    **Red-team #4 (final paper review)** lives here. → `review_synthesis.md` + `rebuttal_kit.md`.
+11. **Revise → build.** `paper-spine-latex` / `paper-compile` → PDF.
+12. **GATE E — pre-submission audit (HARD).** re-run `check_universal.py` (no HARD-FAIL)
+    + `paper-spine-audit`; all [FLAG]s resolved; venue format.
 
-Use `scripts/codex_role.sh` for the independent second-model passes:
+**Hand-off to Stage 2:** the compiled draft prose (LaTeX or Word).
 
-```bash
-bash scripts/codex_role.sh --role review --cd PROJECT --paper PAPER --out OUTPUT
-bash scripts/codex_role.sh --role dual_write --cd PROJECT --paper SOURCE_PACK --section SECTION --out OUTPUT
-bash scripts/codex_role.sh --role cite_verify --cd PROJECT --paper PAPER --bib BIB --out OUTPUT
-bash scripts/codex_role.sh --role data_audit --cd PROJECT --data DATA --claims CLAIMS --out OUTPUT
-```
+## STAGE 2 — Polish (Codex): diagnostic → formal → human/signature → FLAG loop → audit
+The [FLAG]s must be produced BEFORE the formal pass that acts on them (the old
+"2a handles flags, 2b generates them" order was a loop error). Corrected order:
 
-Treat `cite_verify` as a second-eye triage. Authoritative citation verification
-still requires primary-source, DOI, or trusted-index checks. Keep cross-model
-reviews independent and merge unique findings; never average verdicts.
+1. **Diagnostic.** Run the `anti-defensive-and-ai-tells.md` checklist read-only over
+   the draft to emit the `[EDIT]`/`[FLAG]` findings block up front (no edits yet).
+2. **Formal academic polish.** `paper-polish-workflow` (or `paper-refine-special-en`/`-zh`).
+   Structure, sentence logic, expression — AND act on the diagnostic `[FLAG]`s that
+   need added content (missing background citations, genuine critical-thinking, swap a
+   citation that no longer supports its claim).
+3. **Human + signature pass.** `paper-polish-human` (formal:natural ≈ 7:3) applies the
+   author layers — `author-signature-style.md` (prose DNA: long/short mixing; restrained
+   em-dash, negation-first, parallelism, simile, adjective stacking; no colon-definition)
+   and the `[EDIT]` removals from `anti-defensive-and-ai-tells.md`. Grammar-error mode
+   is removed from this flow.
+4. **FLAG-resolution loop.** Re-run the diagnostic; any remaining `[FLAG]` is resolved
+   or consciously accepted by the author. Repeat until clear.
+5. **Final audit.** `check_universal.py` + the diagnostic both clean.
 
-## Stage 2 — Polish loop
+Principle across both author layers: **傾向,不絕對** — every rule is "盡量避免",
+kept when genuinely needed; dialogue negation exempt; keep necessary ethics/scope
+boundaries (delete only the scattered defensive disclaimers).
 
-1. Run a read-only style and argument diagnostic.
-2. Apply formal academic polishing to structure, logic, and evidence-backed
-   expression.
-3. Apply a restrained human-style pass without changing facts, citations,
-   formulas, labels, or numbers.
-4. Resolve or consciously accept every diagnostic flag.
-5. Re-run completeness and integrity checks.
+## STAGE 3 — Final checks before submit
+- Re-run `check_universal.py` (expect no HARD-FAIL: word-count in range, zero
+  placeholders, zero `⏳`).
+- Confirm all [FLAG] items resolved or consciously accepted.
+- `paper-compile` final PDF; venue formatting (e.g. ACM TAPS for TEI).
 
-Personal author-style overlays are optional and are not bundled with this public
-skill.
+---
 
-## Stage 3 — Submission checks
-
-- Confirm venue and submission track requirements from current official sources.
-- Re-run `check_universal.py` with word limits, anonymity mode, TeX root, and
-  compile log when applicable.
-- Verify references, figures, permissions, accessibility text, supplementary
-  files, anonymization, and PDF compilation.
-- Regenerate `OUTPUT_MANIFEST.md` and `HANDOFF.md`.
-
-## Bundled components
-
-| Component | Relative path |
+## Where everything lives
+| Piece | Path |
 |---|---|
-| Orchestrator | `SKILL.md` |
-| Contribution playbooks | `references/contribution-form-playbooks.md` |
-| State manager | `scripts/hci_state.py` |
-| Universal lint | `scripts/check_universal.py` |
-| Codex role dispatcher | `scripts/codex_role.sh` |
-| Codex role contracts | `references/codex-roles/` |
-| Form templates | `templates/` |
+| hci-spine orchestrator | installed `hci-spine/` skill directory (SKILL.md, references/, scripts/, templates/) |
+| Universal honesty lint | `hci-spine/scripts/check_universal.py` |
+| Codex cross-model leg | `hci-spine/scripts/codex_review.sh` |
+| Genre LaTeX skeletons | `hci-spine/templates/*.tex` |
+| Formal polish (stage 2a) | installed `paper-polish-workflow/` skill |
+| Human + signature (stage 2b) | installed `paper-polish-human/` skill (+ author-signature-style.md, anti-defensive-and-ai-tells.md) |

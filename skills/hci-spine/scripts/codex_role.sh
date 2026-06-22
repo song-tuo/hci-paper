@@ -30,21 +30,6 @@ while [ $# -gt 0 ]; do case "$1" in
 case "$ROLE" in review|dual_write|cite_verify|data_audit) ;; *)
   echo "ERROR: --role must be review|dual_write|cite_verify|data_audit" >&2; exit 2;; esac
 [ -n "$OUT" ] || { echo "ERROR: --out required" >&2; exit 2; }
-[ -d "$CD_DIR" ] || { echo "ERROR: --cd directory not found: $CD_DIR" >&2; exit 2; }
-
-case "$ROLE" in
-  review)
-    [ -n "$PAPER" ] && [ -f "$PAPER" ] || { echo "ERROR: review requires --paper FILE" >&2; exit 2; };;
-  dual_write)
-    [ -n "$PAPER" ] && [ -e "$PAPER" ] || { echo "ERROR: dual_write requires --paper SOURCE" >&2; exit 2; }
-    [ -n "$SECTION" ] || { echo "ERROR: dual_write requires --section NAME" >&2; exit 2; };;
-  cite_verify)
-    [ -n "$PAPER" ] && [ -f "$PAPER" ] || { echo "ERROR: cite_verify requires --paper FILE" >&2; exit 2; }
-    [ -n "$BIB" ] && [ -f "$BIB" ] || { echo "ERROR: cite_verify requires --bib FILE" >&2; exit 2; };;
-  data_audit)
-    [ -n "$DATA" ] && [ -e "$DATA" ] || { echo "ERROR: data_audit requires --data PATH" >&2; exit 2; }
-    [ -n "$CLAIMS" ] && [ -f "$CLAIMS" ] || { echo "ERROR: data_audit requires --claims FILE" >&2; exit 2; };;
-esac
 
 TEMPLATE="$ROLES_DIR/$ROLE.prompt.md"
 [ -f "$TEMPLATE" ] || { echo "ERROR: missing prompt template $TEMPLATE" >&2; exit 2; }
@@ -57,18 +42,13 @@ case "$ROLE" in
 esac
 [ "$SCHEMA" = "-" ] || [ -f "$SCHEMA" ] || { echo "ERROR: missing schema $SCHEMA" >&2; exit 2; }
 
-# Assemble the prompt. Escape sed replacement metacharacters so paths containing
-# `&` or `|` remain literal.
+# assemble the final prompt (token substitution; empty tokens become "(not provided)")
 PROMPT="$(mktemp)"; trap 'rm -f "$PROMPT"' EXIT
-sed_escape() { printf '%s' "$1" | sed 's/[&|]/\\&/g'; }
-PAPER_E="$(sed_escape "$PAPER")"; BIB_E="$(sed_escape "$BIB")"
-DATA_E="$(sed_escape "$DATA")"; CLAIMS_E="$(sed_escape "$CLAIMS")"
-SECTION_E="$(sed_escape "$SECTION")"
-sed -e "s|{{PAPER}}|$PAPER_E|g" \
-    -e "s|{{BIB}}|$BIB_E|g" \
-    -e "s|{{DATA}}|$DATA_E|g" \
-    -e "s|{{CLAIMS}}|$CLAIMS_E|g" \
-    -e "s|{{SECTION}}|$SECTION_E|g" \
+sed -e "s|{{PAPER}}|${PAPER:-(not provided)}|g" \
+    -e "s|{{BIB}}|${BIB:-(not provided)}|g" \
+    -e "s|{{DATA}}|${DATA:-(not provided)}|g" \
+    -e "s|{{CLAIMS}}|${CLAIMS:-(not provided)}|g" \
+    -e "s|{{SECTION}}|${SECTION:-(not provided)}|g" \
     "$TEMPLATE" > "$PROMPT"
 if [ -n "$QUESTION" ] && [ -f "$QUESTION" ]; then
   { echo; echo "## Additional caller question"; cat "$QUESTION"; } >> "$PROMPT"

@@ -11,9 +11,8 @@ terminal session. Three modes:
                   directly).
   --print-defaults  write a default config without prompting (smoke test / CI).
 
-The workflow field is first. A `from_idea` project may keep
-`primary_form=undecided` during forge; mature build/rewrite workflows select a
-contribution form at intake.
+The primary_form field is intentionally FIRST: hci-spine routes on contribution
+FORM (kept separate from area/tradition/venue) before anything else.
 """
 from __future__ import annotations
 
@@ -27,8 +26,11 @@ CONTRIBUTION_FORMS = (
     "empirical", "artifact", "method", "conceptual_theoretical",
     "dataset_corpus", "critical_artistic", "replication",
 )
-PRIMARY_FORMS = ("undecided",) + CONTRIBUTION_FORMS
 SECONDARY_FORMS = ("none",) + CONTRIBUTION_FORMS  # "none" == single-form paper
+# `undecided` is a valid PRIMARY choice during the exploratory forge phase; the form
+# is committed at `lock`. It is NOT a real form (no playbook), so it is offered only
+# for the primary slot and forbids a secondary.
+PRIMARY_FORM_CHOICES = ("undecided",) + CONTRIBUTION_FORMS
 WORKFLOWS = ("from_idea", "build_from_materials", "rewrite_existing")
 TIERS = ("flash", "pro")
 LANGUAGES = ("zh", "en")
@@ -49,7 +51,7 @@ DEFAULT_CODEX_ROLES = {
 
 CHOICE_HELP = {
     "primary_form": {
-        "undecided": "想法仍在 forge 阶段;锁定动机后再选择贡献形式",
+        "undecided": "forge 阶段未定;lock 后再选(from_idea 默认)",
         "empirical": "对人/使用的论断,证据来自研究 (study design+分析+findings)",
         "artifact": "做出来的东西即贡献:系统/工具/技术/设计物 (why-hard+评估)",
         "method": "新的研究/设计做法即贡献 (需验证,不只是提出)",
@@ -74,7 +76,7 @@ CHOICE_HELP = {
 }
 
 CHOICE_FIELDS = {
-    "primary_form": PRIMARY_FORMS,
+    "primary_form": PRIMARY_FORM_CHOICES,
     "secondary_form": SECONDARY_FORMS,
     "workflow": WORKFLOWS,
     "tier": TIERS,
@@ -83,14 +85,14 @@ CHOICE_FIELDS = {
 }
 
 TEXT_FIELDS = ("research_area", "tradition", "venue", "materials_dir", "draft_path", "user_motivation", "reference_paths")
-INT_FIELDS = ()
+INT_FIELDS = ("citation_target_count",)
 
 FIELD_ORDER = (
-    "workflow",
     "primary_form",
     "secondary_form",
     "research_area",
     "tradition",
+    "workflow",
     "venue",
     "tier",
     "output_language",
@@ -100,16 +102,17 @@ FIELD_ORDER = (
     "codex_roles",
     "reference_mode",
     "reference_paths",
+    "citation_target_count",
 )
 
 
 @dataclass
 class Config:
-    workflow: str = "from_idea"
     primary_form: str = "undecided"
     secondary_form: str = "none"
     research_area: str = ""
     tradition: str = ""
+    workflow: str = "build_from_materials"
     venue: str = ""
     tier: str = "pro"
     output_language: str = "zh"
@@ -119,6 +122,7 @@ class Config:
     codex_roles: list = field(default_factory=lambda: ["review"])
     reference_mode: str = "local_first"
     reference_paths: list = field(default_factory=lambda: ["."])
+    citation_target_count: int = 25
 
     def as_dict(self) -> dict:
         return {k: getattr(self, k) for k in FIELD_ORDER}
@@ -128,8 +132,8 @@ def validate_config(cfg) -> list:
     """Return a list of human-readable validation errors ([] == valid).
 
     Accepts a Config or a plain dict. Enforces: closed-enum membership for choice
-    fields, non-empty codex_roles all drawn from CODEX_ROLES, and reference_paths
-    as a non-empty list.
+    fields, non-empty codex_roles all drawn from CODEX_ROLES, reference_paths a
+    non-empty list, citation_target_count a positive int.
     """
     d = cfg.as_dict() if isinstance(cfg, Config) else dict(cfg)
     errors: list = []
@@ -137,10 +141,10 @@ def validate_config(cfg) -> list:
         val = d.get(field_name)
         if val not in allowed:
             errors.append(f"{field_name}={val!r} not in {allowed}")
-    if d.get("primary_form") == "undecided" and d.get("workflow") != "from_idea":
-        errors.append("primary_form may be 'undecided' only when workflow='from_idea'")
     if d.get("secondary_form") not in (None, "none") and d.get("secondary_form") == d.get("primary_form"):
         errors.append("secondary_form must differ from primary_form (or be 'none')")
+    if d.get("primary_form") == "undecided" and d.get("secondary_form") not in (None, "none"):
+        errors.append("primary_form=undecided cannot carry a secondary_form (choose the form at lock)")
     roles = d.get("codex_roles") or []
     if not isinstance(roles, list) or not roles:
         errors.append("codex_roles must be a non-empty list")
@@ -153,6 +157,9 @@ def validate_config(cfg) -> list:
     rp = d.get("reference_paths")
     if not isinstance(rp, list) or not rp:
         errors.append("reference_paths must be a non-empty list")
+    ctc = d.get("citation_target_count")
+    if not isinstance(ctc, int) or isinstance(ctc, bool) or ctc <= 0:
+        errors.append(f"citation_target_count must be a positive int, got {ctc!r}")
     return errors
 
 
@@ -250,15 +257,13 @@ def run_in_place(output_dir: Path) -> Config:
     print("  hci-spine intake — HCI 论文全流程配置")
     print("=" * 60)
     cfg = Config()
-    cfg.workflow = ask_choice("workflow", WORKFLOWS, cfg.workflow)
-    primary_options = PRIMARY_FORMS if cfg.workflow == "from_idea" else CONTRIBUTION_FORMS
-    primary_default = "undecided" if cfg.workflow == "from_idea" else "artifact"
-    cfg.primary_form = ask_choice("primary_form", primary_options, primary_default)
+    cfg.primary_form = ask_choice("primary_form", PRIMARY_FORM_CHOICES, cfg.primary_form)
     # Re-default codex roles based on the chosen primary form before asking.
     cfg.codex_roles = DEFAULT_CODEX_ROLES.get(cfg.primary_form, ["review"])
     cfg.secondary_form = ask_choice("secondary_form", SECONDARY_FORMS, cfg.secondary_form)
     cfg.research_area = ask_text("research_area (如 human-AI interaction / tangible)", cfg.research_area)
     cfg.tradition = ask_text("tradition (如 systems-building / research-through-design)", cfg.tradition)
+    cfg.workflow = ask_choice("workflow", WORKFLOWS, cfg.workflow)
     cfg.venue = ask_text("venue (如 TEI 2027 / CHI 2027)", cfg.venue)
     cfg.tier = ask_choice("tier", TIERS, cfg.tier)
     cfg.output_language = ask_choice("output_language", LANGUAGES, cfg.output_language)
@@ -269,6 +274,7 @@ def run_in_place(output_dir: Path) -> Config:
     cfg.reference_mode = ask_choice("reference_mode", REFERENCE_MODES, cfg.reference_mode)
     ref = ask_text("reference_paths (逗号分隔,默认当前目录)", ".")
     cfg.reference_paths = [p.strip() for p in ref.split(",") if p.strip()] or ["."]
+    cfg.citation_target_count = ask_int("citation_target_count", cfg.citation_target_count)
     return cfg
 
 

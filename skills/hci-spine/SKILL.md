@@ -1,13 +1,14 @@
 ---
 name: hci-spine
-description: HCI paper full-pipeline orchestrator and project state machine. Routes by contribution form while keeping form separate from area, tradition, and venue; manages a gated lifecycle from idea forge through prototype, ethics, study design, evidence, writing, review, and LaTeX/PDF submission. Includes rationale matrices, research and integrity gates, multi-reviewer simulation, and optional Codex cross-model roles. Use for HCI project development, HCI paper building or rewriting, and CHI, UIST, CSCW, DIS, IUI, or TEI submission workflows.
+description: HCI paper full-pipeline orchestrator + project state machine. Routes by contribution FORM (empirical/artifact/method/conceptual_theoretical/dataset_corpus/critical_artistic/replication) kept separate from area/tradition/venue, runs a gated lifecycle (forge→lock→prototype_gate→ethics→study_design→pilot→instrumentation→data_freeze→analysis→claim_lock→paper), then idea → research → write → review → rebuttal-ready → LaTeX/PDF. Inherits paper-spine's row-by-row rationale matrix, deep-research rigor, and multi-reviewer simulation, with Codex cross-model integration at four named gates. Triggers on "hci-spine", "write an HCI paper", "CHI/UIST/CSCW/DIS/IUI paper", "做 HCI 论文", "HCI 全流程", "我要写交互论文".
+allowed-tools: Bash(*), Read, Grep, Glob, Write, Edit, Skill, mcp__codex__codex, mcp__codex__codex-reply
 ---
 
 # HCI-Spine Orchestrator
 
 The HCI-native sibling of `paper-spine`. Same DNA — research-first, motivation-
 gated, row-by-row rationale matrix, integrity gates — but the spine is shaped
-around **HCI contribution forms** (informed by Wobbrock & Kientz 2016), not an ML/IMRaD
+around **HCI contribution types** (Wobbrock & Kientz 2016), not the ML/IMRaD
 default. It is the suite entrypoint and routes to branch skills; it never
 fabricates study data, participant quotes, metrics, citations, or figures.
 User materials are authoritative for this paper's results; external exemplars
@@ -15,14 +16,16 @@ teach structure and rhetoric only.
 
 ## Operating Principle
 
-HCI papers are judged on **contribution clarity**, not template compliance. Keep
-contribution form, research area, research tradition, and venue separate. For a
-mature build or rewrite, resolve these axes at intake. For a vague idea, stay in
-`forge` and leave the form undecided until the motivation is locked.
+HCI papers are judged on **contribution clarity**, not template compliance. A
+UIST systems paper and a CSCW interview study are different *genres* with
+different reviewer expectations, different figure conventions, and different
+failure modes. So the FIRST decision is always: *which contribution type are we
+writing?* Everything downstream — the rationale matrix columns, the reviewer
+persona, which Codex gate matters most — branches off that.
 
-## Phase 0 — Contribution-Form Router
+## Phase 0 — Contribution-Form Router (DO THIS FIRST)
 
-Resolve **four orthogonal axes when the project is ready to lock — do not conflate them**:
+Resolve **four orthogonal axes — do not conflate them** (the old single-"type"
 router did, mixing form/area/tradition/venue). See
 `references/contribution-form-playbooks.md`.
 
@@ -66,7 +69,7 @@ wizard (see **Command-Line UI** below) rather than hand-asking a long checklist:
 
 | Field | Allowed Values |
 |---|---|
-| `primary_form` | the seven forms above; `undecided` is allowed only during `from_idea` forge |
+| `primary_form` | `undecided` (forge default), or `empirical`, `artifact`, `method`, `conceptual_theoretical`, `dataset_corpus`, `critical_artistic`, `replication` |
 | `secondary_form` | one of the above or empty (enables executable mixed) |
 | `research_area` | free text (e.g. human-AI interaction, tangible) |
 | `tradition` | free text (e.g. systems-building, research-through-design) |
@@ -80,15 +83,16 @@ wizard (see **Command-Line UI** below) rather than hand-asking a long checklist:
 | `codex_roles` | subset of `review`, `dual_write`, `cite_verify`, `data_audit` |
 | `reference_mode` | `local_first`, `specified_paths`, `web` |
 | `reference_paths` | list; default `["."]` |
+| `citation_target_count` | integer; default `25` |
 
 If `workflow` is `from_idea` and the idea is vague, route to `idea-discovery`
 (or `research-refine`) BEFORE Phase 1.
 
 ## Non-Negotiable Route
 
-1. For `build_from_materials` / `rewrite_existing`, resolve Phase 0 immediately.
-   For `from_idea`, remain in `forge`; resolve the router before advancing from
-   `lock` to `prototype_gate`. Then write `contribution_form.md`.
+1. **Phase 0 axes recorded** in `contribution_form.md`. `primary_form` MAY be
+   `undecided` during `forge`/`from_idea`; it MUST be committed (a real form) before
+   leaving `lock` — the state machine enforces this. Area/tradition/venue recorded when known.
 2. Create or verify `source_map.md`.
 3. **Research** via `deep-research` (or `comm-lit-review`-style local-first flow):
    index local/default references per `reference_mode`, then supplement with web.
@@ -110,18 +114,16 @@ governs the project; these run inside the paper track.
 
 5. **GATE A — pre-study integrity + motivation (HARD; no manuscript yet).** Confirm
    `confirmed_motivation.md` + explicit contribution statement in the FORM's
-   vocabulary; scope and the ethics plan recorded. **Red-team #1 (idea kill):** run
+   vocabulary; scope + ethics resolved. **Red-team #1 (idea kill):** run
    `kill-argument` on the idea before locking — survive or revise. (state: `lock`.)
-6. **GATE B — study and evidence readiness (HARD).** Before data collection, run
-   **Red-team #3 (study-design attack)** for empirical work and approve the ethics,
-   protocol, pilot, and instrumentation gates. After collection, freeze data before
-   analysis. Before writing Findings, require every planned claim to have traceable
-   evidence and run the form's data audit
+6. **GATE B — pre-draft evidence readiness (HARD; before writing Findings).** Data
+   frozen; every planned claim has traceable evidence; run the form's data audit
    (`empirical`/`dataset_corpus`/`replication` → `experiment-audit` or Codex
    `data_audit`; `artifact` → eval numbers trace to logs/benchmarks, usability to the
    actual study, no phantom baselines). No finding may be written the evidence does
-   not support. Run **Red-team #2 (media/AI necessity)** for
-   `artifact`/`critical_artistic` using the media-fit lens.
+   not support. **Red-team #2 (media/AI necessity)** for `artifact`/`critical_artistic`
+   (media-fit lens). **Red-team #3 (study-design attack)** for empirical work, before
+   data collection. (state: `prototype_gate` / `study_design`.)
 7. Create `section_blueprints.md` + the **HCI Rationale Matrix** (below) BEFORE drafting.
 8. **Draft** via the form template (`templates/<form>.tex`) + playbook. If
    `codex_roles` includes `dual_write`, run `codex_role.sh --role dual_write` on
@@ -129,18 +131,34 @@ governs the project; these run inside the paper track.
 9. **GATE C — pre-review completeness (HARD; manuscript now exists).** Run the
    universal lint `python3 scripts/check_universal.py PAPER --min-words … --max-words …
    [--tex-root DIR] [--anonymous] [--log build.log]` (word-count in range, no
-   placeholders, `\input`/figure/bib/`\cite` resolve) + `citation-audit` /
-   `paper-claim-audit` + Codex `cite_verify` (`codex_role.sh --role cite_verify`).
-   This is where the lint belongs — it needs the draft.
+   placeholders, `\input`/figure/bib/`\cite` resolve). Then verify citations in TWO
+   halves: **existence** deterministically via `python3 scripts/verify_citations.py
+   refs.bib --out verify_citations.json` (Crossref by DOI/title; a `no` is a likely
+   fabrication) + **support** via Codex `cite_verify` (`codex_role.sh --role cite_verify`,
+   which reads `verify_citations.json`) + `paper-claim-audit`. An all-`unsure`
+   cite_verify is rejected by the validator (no real verification). Also run
+   `artifact_check.py --require-through C` (deliverables exist + non-stub) and
+   `humanize_check.py PAPER` (signature-style / anti-AI gate).
 10. **GATE D — peer review.** `academic-paper-reviewer` (5 personas, form-configured
     via the playbook reviewer card) + `kill-argument` + Codex `review`
     (`codex_role.sh --role review`; MCP-independent; anti-anchoring; merge-don't-average).
     **Red-team #4 (final paper review)** lives here. → `review_synthesis.md` +
     `rebuttal_kit.md`.
 11. Revise against the synthesis, then **LaTeX/PDF** (`paper-spine-latex` / `paper-compile`).
-12. **GATE E — pre-submission audit (HARD).** Re-run `check_universal.py` (expect no
-    HARD-FAIL) + `paper-spine-audit`; every [FLAG] resolved or consciously accepted;
-    venue format applied. No BLOCKED before declaring complete.
+12. **GATE E — pre-submission audit (HARD).** Run the **teaching audit**
+    `python3 scripts/hci_audit.py PAPER --root <proj> --min-words … --max-words …
+    --require-through E` (aggregates `check_universal` + `artifact_check` +
+    `humanize_check` into a what/where/root-cause/fix/impact report). Every [FLAG]
+    resolved; venue format applied. **Bilingual:** `hci_translate.py` scaffolds
+    `translation_<lang>/`, then `translate_guard.py` must PASS (every deliverable
+    translated, table rows 1:1). No HARD-FAIL before declaring complete.
+
+**Deterministic gate scripts** (all stdlib, tested): `artifact_check.py`
+(required-deliverable existence per GATE A–E), `check_universal.py` (manuscript
+honesty + LaTeX resolution), `humanize_check.py` (signature-style / anti-AI gate),
+`verify_citations.py` (Crossref existence), `validate_codex_output.py` (Codex JSON),
+`hci_audit.py` (teaching aggregate), `hci_translate.py` + `translate_guard.py`
+(bilingual package). Run any at its gate; `hci_audit.py` runs the lint trio at once.
 
 If a branch skill is unavailable, follow its workflow locally and produce the
 same artifacts.
@@ -150,15 +168,16 @@ same artifacts.
 Extends paper-spine's matrix with HCI-load-bearing columns. Built before final
 writing, used as the execution plan:
 
-| Row ID | Manuscript Unit | Function | Motivation Link | **Contribution-Form Move** | **Evidence/Design Rationale** | Exemplar Pattern Learned | Venue Norm | User Evidence Anchor | Planned Change | Final Check |
+| Row ID | Manuscript Unit | Function | Motivation Link | **Contribution-Type Move** | **Study/Design Rationale** | Exemplar Pattern Learned | Venue Norm | User Evidence Anchor | Planned Change | Final Check |
 |---|---|---|---|---|---|---|---|---|---|---|
 
-- **Contribution-Form Move**: explain how the unit advances the declared primary
-  or secondary form.
-- **Evidence/Design Rationale**: for empirical work, justify design, participants,
-  measures, analysis, and reliability; for artifacts, justify the evaluation and
-  design decision; for conceptual, method, dataset, critical/artistic, and
-  replication forms, use the corresponding playbook. The first data row must justify the whole
+- **Contribution-Type Move**: how this unit advances the *declared* contribution
+  (e.g. "establishes the interaction technique's novelty vs prior art" for a
+  system paper; "operationalizes RQ2 into a measurable construct" for empirical).
+- **Study/Design Rationale**: for `empirical` (or any form with an empirical secondary), why this study choice is valid
+  (design, participants, measure, analysis, reliability); for system, why this
+  evaluation answers "does the technique work"; for design, the design decision
+  and its reflexive justification. The first data row must justify the whole
   contribution arc (formative → artifact/system → summative, or RQ → method →
   findings → implications), not a single section.
 
@@ -188,10 +207,10 @@ checked by `scripts/validate_codex_output.py --role R FILE`. Roles are opt-in vi
 
 | Role | Hook | Dispatcher call | Output / validator |
 |---|---|---|---|
-| `review` | Gate D | `codex_role.sh --role review --paper P` (or free-form `codex_review.sh --prompt`) | prose review |
-| `dual_write` | Draft | `codex_role.sh --role dual_write --section S --paper P` | prose draft of ONE section; reconcile |
-| `cite_verify` | Gate C | `codex_role.sh --role cite_verify --paper P --bib B` | JSON (`cite_verify.schema.json`) → validator |
-| `data_audit` | Gate B | `codex_role.sh --role data_audit --data D --claims C` | JSON (`data_audit.schema.json`) → validator |
+| `review` | Gate 10 | `codex_role.sh --role review --paper P` (or free-form `codex_review.sh --prompt`) | prose review |
+| `dual_write` | Step 8 | `codex_role.sh --role dual_write --section S --paper P` | prose draft of ONE section; Claude reconciles |
+| `cite_verify` | Gate 9 | `codex_role.sh --role cite_verify --paper P --bib B` | JSON (`cite_verify.schema.json`) → `validate_codex_output.py` |
+| `data_audit` | Gate 6 | `codex_role.sh --role data_audit --data D --claims C` | JSON (`data_audit.schema.json`) → `validate_codex_output.py` |
 
 Prompt templates + schemas live in `references/codex-roles/`. `--dry-run` resolves
 the binary and prints the command without calling Codex (used by `test_codex_role.sh`).
@@ -203,13 +222,11 @@ Default `codex_roles` by `primary_form`: `data_audit` + `cite_verify` for
 
 ## Standard Artifacts (under `hci_spine_output/`)
 
-`HCI_STATE.json`, `PROJECT_ANCHOR.md`, `DECISION_LEDGER.md`,
-`CLAIM_EVIDENCE_LEDGER.md`, `OUTPUT_MANIFEST.md`, `HANDOFF.md`,
 `hci_spine_config.json`, `contribution_form.md`, `source_map.md`,
 `research_dossier.md`, `exemplar_learning_dossier.md`, `style_profile.md`,
 `sota_gap_map.md`, `motivation_options_after_research.md`,
 `citation_support_bank.md`, `confirmed_motivation.md`, `section_blueprints.md`,
-`hci_rationale_matrix.md`, form-specific audit (`data_audit.md` /
+`hci_rationale_matrix.md`, genre-specific audit (`data_audit.md` /
 `technical_eval_trace.md` / `portfolio_annotation_trace.md`),
 `review_synthesis.md`, `rebuttal_kit.md`, `final_paper/main.tex`,
 `final_paper/paper.pdf`.
@@ -233,13 +250,14 @@ intake wizard instead of hand-asking a long checklist. Resolve the launcher's
 absolute path (it lives beside this skill):
 
 ```bash
-bash ~/.claude/skills/hci-spine/scripts/launch_hci_spine_ui.sh <output_dir>
+bash ~/.claude/skills/hci-spine/scripts/launch_hci_spine_ui.sh <output_dir>      # macOS/Linux
+powershell -ExecutionPolicy Bypass -File ~/.claude/skills/hci-spine/scripts/launch_hci_spine_ui.ps1 <output_dir>  # Windows
 ```
 
 This opens an external Terminal window with an arrow-key TUI (↑/↓ field, ←/→
 choice, Enter to edit text, `S` save, `Q` quit) and writes
-`<output_dir>/hci_spine_config.json` + `.md`. The wizard asks workflow first;
-`from_idea` may keep `primary_form=undecided` during forge. If no window can open (headless/sandboxed) or stdin is not a
+`<output_dir>/hci_spine_config.json` + `.md`. `primary_form` is the first
+field by design. If no window can open (headless/sandboxed) or stdin is not a
 tty, run the in-place numbered fallback in the current terminal:
 
 ```bash
@@ -249,6 +267,15 @@ python3 ~/.claude/skills/hci-spine/scripts/intake_wizard.py --in-place --output-
 Only fall back to chat-based structured questions if both paths are impossible.
 Never silently skip configuration. The wizard pre-selects sensible
 `codex_roles` defaults from the chosen `primary_form`.
+
+## Distribution (canonical + adapters)
+
+This skill is authored ONCE here (canonical: `~/.claude/skills/hci-spine`). Codex's
+validator rejects the `argument-hint` / `allowed-tools` frontmatter and wants an
+`agents/openai.yaml`, so regenerate the Codex copy with
+`python3 scripts/build_adapters.py` (real-file copy — not a symlink, which breaks
+Windows/zip; strips the incompatible keys; idempotent). Never hand-edit the generated
+`~/.codex/skills/hci-spine` (it carries `ADAPTER_GENERATED.md`); edit canonical and re-run.
 
 ## Optional Vision Lens
 

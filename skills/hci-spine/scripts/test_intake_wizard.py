@@ -30,9 +30,17 @@ def main():
     cfg = iw.Config()
     check("default Config validates clean", iw.validate_config(cfg) == [])
 
-    # every selectable primary form has a codex-roles default
-    check("DEFAULT_CODEX_ROLES covers all forms",
-          set(iw.DEFAULT_CODEX_ROLES) == set(iw.PRIMARY_FORMS))
+    # every contribution FORM (+ undecided) has a codex-roles default
+    check("DEFAULT_CODEX_ROLES covers all forms + undecided",
+          set(iw.CONTRIBUTION_FORMS).issubset(iw.DEFAULT_CODEX_ROLES) and "undecided" in iw.DEFAULT_CODEX_ROLES)
+
+    # default config is 'undecided' (from_idea-safe) and validates clean
+    check("default primary_form is undecided", cfg.primary_form == "undecided")
+    check("undecided default validates clean", iw.validate_config(cfg) == [])
+
+    # undecided cannot carry a secondary form
+    bad_u = iw.Config(); bad_u.primary_form = "undecided"; bad_u.secondary_form = "empirical"
+    check("undecided + secondary rejected", any("undecided" in e for e in iw.validate_config(bad_u)))
 
     # as_dict carries every declared field
     check("as_dict has all FIELD_ORDER keys",
@@ -51,11 +59,6 @@ def main():
     mix = iw.Config(); mix.primary_form = "artifact"; mix.secondary_form = "empirical"
     check("valid mixed (artifact+empirical) validates", iw.validate_config(mix) == [])
 
-    # undecided is valid only while forging an idea
-    undecided_build = iw.Config(); undecided_build.workflow = "build_from_materials"
-    check("undecided rejected outside from_idea",
-          any("undecided" in e for e in iw.validate_config(undecided_build)))
-
     # bad codex role caught
     bad2 = iw.Config(); bad2.codex_roles = ["review", "make_coffee"]
     check("unknown codex role rejected", any("codex_roles" in e for e in iw.validate_config(bad2)))
@@ -67,6 +70,14 @@ def main():
     # duplicate codex roles caught
     bad4 = iw.Config(); bad4.codex_roles = ["review", "review"]
     check("duplicate codex roles rejected", any("duplicate" in e for e in iw.validate_config(bad4)))
+
+    # non-positive citation count caught
+    bad5 = iw.Config(); bad5.citation_target_count = 0
+    check("citation_target_count<=0 rejected", any("citation_target_count" in e for e in iw.validate_config(bad5)))
+
+    # bool is not accepted as int (Python gotcha)
+    bad6 = iw.Config(); bad6.citation_target_count = True
+    check("bool citation_target_count rejected", any("citation_target_count" in e for e in iw.validate_config(bad6)))
 
     # empty reference_paths caught
     bad7 = iw.Config(); bad7.reference_paths = []
